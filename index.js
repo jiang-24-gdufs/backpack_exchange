@@ -1,4 +1,7 @@
 "use strict";
+
+const { apisecret, apikey } = require('./.env/keys.js')
+
 Object.defineProperty(exports, "__esModule", { value: true });
 const backpack_client_1 = require("./backpack_client");
 
@@ -57,6 +60,7 @@ const init = async (client) => {
             return;
         }
     } catch (e) {
+        console.log(getNowFormatDate(), "报错...", e.toString());
         init(client);
         console.log(getNowFormatDate(), "挂单失败，重新挂单中...");
         await delay(1000);
@@ -123,6 +127,7 @@ const buyfun = async (client) => {
     console.log(getNowFormatDate(), "sol_usdc的市场当前价格:", lastPrice);
     console.log(getNowFormatDate(), `正在买入中... 花${(userbalance.USDC.available - 2).toFixed(2).toString()}个USDC买SOL`);
     let quantitys = ((userbalance.USDC.available - 2) / lastPrice).toFixed(2).toString();
+    // let quantitys = 5
     console.log("1024", quantitys);
     let orderResultBid = await client.ExecuteOrder({
         orderType: "Limit",
@@ -132,6 +137,7 @@ const buyfun = async (client) => {
         symbol: "SOL_USDC",
         timeInForce: "IOC"
     })
+    // console.log(orderResultBid);
     if (orderResultBid?.status == "Filled" && orderResultBid?.side == "Bid") {
         console.log(getNowFormatDate(), "下单成功");
         successbuy += 1;
@@ -144,8 +150,8 @@ const buyfun = async (client) => {
 }
 
 (async () => {
-    const apisecret = "";
-    const apikey = "";
+    // const apisecret = "Rppj+7pmorwn+yPAAjvmDLSpUM1fECpl7EYE62koNpM=";
+    // const apikey = "a2pyJgqNAangA5VY7O4tpzYW4NJ6tmzGp9emN6f6pYc=";
     const client = new backpack_client_1.BackpackClient(apisecret, apikey);
     init(client);
 })()

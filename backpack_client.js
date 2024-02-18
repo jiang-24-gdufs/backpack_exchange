@@ -171,6 +171,23 @@ class BackpackClient {
             .createPublicKey(toPkcs8der(privateKey))
             .export({ format: "der", type: "spki" })
             .toString("base64");
+        // 将私钥转换为PKCS8 DER格式
+        // const pkcs8PrivateKey = toPkcs8der(privateKey);
+        // console.log('PKCS8 DER Private Key:', pkcs8PrivateKey);
+
+        // // 从PKCS8 DER格式的私钥创建公钥
+        // const publicKey1 = crypto_1.default.createPublicKey(pkcs8PrivateKey);
+        // console.log('Public Key:', publicKey1);
+
+        // // 将公钥导出为DER格式的SPKI类型
+        // const spkiPublicKey = publicKey1.export({ format: "der", type: "spki" });
+        // console.log('SPKI Public Key:', spkiPublicKey);
+
+        // // 将SPKI公钥转换为base64字符串
+        // const base64PublicKey = spkiPublicKey.toString("base64");
+        // console.log('Base64 Public Key:', base64PublicKey);
+
+        // const pubkeyFromPrivateKey = base64PublicKey;
         const pubkey = toSpki(publicKey)
             .export({ format: "der", type: "spki" })
             .toString("base64");
@@ -196,6 +213,7 @@ class BackpackClient {
             }
         }
         catch (e) {
+            console.log('BPX api error', e.toString(), e.response && e.response.body ? e.response.body : '');
             if (retrysLeft > 0) {
                 const numTry = 11 - retrysLeft;
                 const backOff = Math.pow(numTry, BACKOFF_EXPONENT);
