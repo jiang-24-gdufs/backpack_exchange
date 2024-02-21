@@ -93,7 +93,7 @@ const sellfun = async (client) => {
     //获取当前
     let { lastPrice: lastPriceask } = await client.Ticker({ symbol: "SOL_USDC" });
     console.log(getNowFormatDate(), "sol_usdc的市场当前价格:", lastPriceask);
-    let quantitys = (userbalance2.SOL.available).toFixed(2).toString();
+    let quantitys = (userbalance2.SOL.available - 0.01).toFixed(2).toString();
     console.log(getNowFormatDate(), `正在卖出中... 卖${quantitys}个SOL`);
 
     let orderPrice = (lastPriceask * (1 + GAP)).toFixed(2).toString();
@@ -136,7 +136,7 @@ const buyfun = async (client) => {
     //获取当前
     let { lastPrice } = await client.Ticker({ symbol: "SOL_USDC" });
     console.log(getNowFormatDate(), "sol_usdc的市场当前价格:", lastPrice);
-    console.log(getNowFormatDate(), `正在买入中... 花${(userbalance.USDC.available - 2).toFixed(2).toString()}个USDC买SOL`);
+    console.log(getNowFormatDate(), `正在买入中... 花${(userbalance.USDC.available - 0.3).toFixed(2).toString()}个USDC买SOL`);
     let quantitys = ((userbalance.USDC.available - 0.3) / lastPrice).toFixed(2).toString();
 
     let orderPrice = (lastPrice * (1 - GAP)).toFixed(2).toString();
