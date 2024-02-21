@@ -5,6 +5,8 @@ const { apisecret, apikey } = require('./.env/keys.js')
 Object.defineProperty(exports, "__esModule", { value: true });
 const backpack_client_1 = require("./backpack_client");
 
+const GAP = 0.002
+
 function delay(ms) {
     return new Promise(resolve => {
         setTimeout(resolve, ms);
@@ -48,22 +50,27 @@ let sellbuy = 0;
 const init = async (client) => {
     try {
         console.log(`成功买入次数:${successbuy},成功卖出次数:${sellbuy}`);
-        console.log(getNowFormatDate(), "等待3秒...");
-        await delay(3000);
+        console.log(getNowFormatDate(), "等待2-7秒...");
+        await delay(5000 * Math.random() + 2000);
         console.log(getNowFormatDate(), "正在获取账户信息中...");
         let userbalance = await client.Balance();
         //判断账号USDC余额是否大于5
-        if (userbalance.USDC.available > 5) {
+        console.log(getNowFormatDate(), "账户信息:", `USDC:${userbalance.USDC.available},SOL:${userbalance.SOL.available}`);
+
+        if (userbalance.SOL.available > 5) {
+            await sellfun(client);
+        } else if (userbalance.USDC.available > 5) {
             await buyfun(client);
         } else {
-            await sellfun(client);
-            return;
+            console.log(getNowFormatDate(), "账户USDC和SOL余额都小于5，等待15s重新挂单中...");
+            await delay(15000);
+            throw new Error("账户USDC和SOL余额都小于5");
         }
     } catch (e) {
         console.log(getNowFormatDate(), "报错...", e.toString());
         init(client);
-        console.log(getNowFormatDate(), "挂单失败，重新挂单中...");
-        await delay(1000);
+        console.log(getNowFormatDate(), "挂单失败，等到15s重新挂单中...");
+        await delay(15000);
     }
 }
 
@@ -86,15 +93,19 @@ const sellfun = async (client) => {
     //获取当前
     let { lastPrice: lastPriceask } = await client.Ticker({ symbol: "SOL_USDC" });
     console.log(getNowFormatDate(), "sol_usdc的市场当前价格:", lastPriceask);
-    let quantitys = ((userbalance2.SOL.available / 2) - 0.02).toFixed(2).toString();
+    let quantitys = (userbalance2.SOL.available).toFixed(2).toString();
     console.log(getNowFormatDate(), `正在卖出中... 卖${quantitys}个SOL`);
+
+    let orderPrice = (lastPriceask * (1 + GAP)).toFixed(2).toString();
+    console.log(getNowFormatDate(), `正在卖出中... 挂单价格为:${orderPrice}`);
+
     let orderResultAsk = await client.ExecuteOrder({
         orderType: "Limit",
-        price: lastPriceask.toString(),
+        price: orderPrice,
         quantity: quantitys,
         side: "Ask", //卖
         symbol: "SOL_USDC",
-        timeInForce: "IOC"
+        timeInForce: "GTC"
     })
 
     if (orderResultAsk?.status == "Filled" && orderResultAsk?.side == "Ask") {
@@ -120,22 +131,25 @@ const buyfun = async (client) => {
     console.log(getNowFormatDate(), "正在获取账户信息中...");
     //获取账户信息
     let userbalance = await client.Balance();
-    console.log(getNowFormatDate(), "账户信息:", userbalance);
+    console.log(getNowFormatDate(), "账户信息:", `USDC:${userbalance.USDC.available},SOL:${userbalance.SOL.available}`);
     console.log(getNowFormatDate(), "正在获取sol_usdc的市场当前价格中...");
     //获取当前
     let { lastPrice } = await client.Ticker({ symbol: "SOL_USDC" });
     console.log(getNowFormatDate(), "sol_usdc的市场当前价格:", lastPrice);
     console.log(getNowFormatDate(), `正在买入中... 花${(userbalance.USDC.available - 2).toFixed(2).toString()}个USDC买SOL`);
-    let quantitys = ((userbalance.USDC.available - 2) / lastPrice).toFixed(2).toString();
-    // let quantitys = 5
-    console.log("1024", quantitys);
+    let quantitys = ((userbalance.USDC.available - 0.3) / lastPrice).toFixed(2).toString();
+
+    let orderPrice = (lastPrice * (1 - GAP)).toFixed(2).toString();
+
+    console.log(getNowFormatDate(), `正在买入中... 挂单价格为:${orderPrice}`);
+
     let orderResultBid = await client.ExecuteOrder({
         orderType: "Limit",
         price: lastPrice.toString(),
         quantity: quantitys,
         side: "Bid", //买
         symbol: "SOL_USDC",
-        timeInForce: "IOC"
+        timeInForce: "GTC"
     })
     // console.log(orderResultBid);
     if (orderResultBid?.status == "Filled" && orderResultBid?.side == "Bid") {
@@ -150,8 +164,6 @@ const buyfun = async (client) => {
 }
 
 (async () => {
-    // const apisecret = "Rppj+7pmorwn+yPAAjvmDLSpUM1fECpl7EYE62koNpM=";
-    // const apikey = "a2pyJgqNAangA5VY7O4tpzYW4NJ6tmzGp9emN6f6pYc=";
     const client = new backpack_client_1.BackpackClient(apisecret, apikey);
     init(client);
 })()
@@ -163,7 +175,7 @@ const buyfun = async (client) => {
 //     quantity: "0.36",
 //     side: "Ask", //卖
 //     symbol: "SOL_USDC",
-//     timeInForce: "IOC"
+//     timeInForce: "GTC"
 // }).then((result) => {
 //     console.log(getNowFormatDate(),result);
 // })
@@ -175,7 +187,7 @@ const buyfun = async (client) => {
 //     quantity: "0.36",
 //     side: "Bid", //买
 //     symbol: "SOL_USDC",
-//     timeInForce: "IOC"
+//     timeInForce: "GTC"
 // }).then((result) => {
 //     console.log(getNowFormatDate(),result);
 // })
